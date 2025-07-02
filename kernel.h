@@ -27,4 +27,31 @@ static inline unsigned char ib(unsigned short port)
     return data;
 }
 
+// This is used to change the color of text
+// Unimplemented
+enum vga_color
+{
+	C_BLACK = 0,
+	C_BLUE = 1,
+	C_GREEN = 2,
+	C_CYAN = 3,
+	C_RED = 4,
+	C_MAGENTA = 5,
+	C_BROWN = 6,
+	C_LIGHT_GREY = 7,
+	C_DARK_GREY = 8,
+	C_LIGHT_BLUE = 9,
+	C_DARK_BLUE = 10,
+	C_LIGHT_CYAN = 11,
+	C_LIGHT_RED = 12,
+	C_LIGHT_MAGENTA = 13,
+	C_YELLOW = 14,
+	C_WHITE = 15,
+};
+
+
+
+
+
+
 #endif

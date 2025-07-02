@@ -1,6 +1,7 @@
 // The kernel :D
 
 
+#include "gdt.h"
 #include "kernel.h"
 #include "idt.h"
 #include "kbd.h"
@@ -150,11 +151,15 @@ void print(const char* str)
 // The kernel's entry point
 extern "C" void kmain()
 {
+	extern uint32_t end;
+
 	// Clear the screen
 	clear();
 	// Welcome message
 	print("[INFO] KERNEL LOADED SUCCESSFULLY.\n");
 
+	// Initialize GDT
+	gdt_init();
 	// Initialize the IDT
 	idt_init();
 	// Initialize the keyboard driver

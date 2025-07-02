@@ -11,8 +11,8 @@ CPP_F = -I. -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-rtti -c
 LD_F = -T linker.ld -nostdlib -lgcc
 
 # Files to include
-ASM_S = boot.asm switch.asm
-CPP_S = kernel.cpp sh.cpp kbd.cpp idt.cpp task.cpp
+ASM_S = boot.asm gdt_asm.asm switch.asm
+CPP_S = kernel.cpp sh.cpp kbd.cpp idt.cpp task.cpp gdt.cpp
 OBJ = $(ASM_S:.asm=.o) $(CPP_S:.cpp=.o)
 KERNEL = kurios32.bin
 
