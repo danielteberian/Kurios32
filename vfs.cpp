@@ -158,7 +158,7 @@ void ls()
 {
 	if (file_count == 0)
 	{
-		print("[INFO] No files found.\n");
+		print("\n[INFO] No files found.\n");
 		return;
 	}
 

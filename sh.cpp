@@ -4,6 +4,7 @@
 #include "kernel.h"
 #include "mem.h"
 #include "sh.h"
+#include "testing/test.h"
 #include "vfs.h"
 
 #include <stddef.h>
@@ -11,6 +12,22 @@
 
 
 #define MAX_CMD_LENGTH 256
+
+// Converts strings to integers
+int atoi(const char* str)
+{
+	int res = 0;
+	int i = 0;
+
+	while (str[i] >= '0' && str[i] <= '9')
+	{
+		res = res * 10 + (str[i] - '0');
+		i++;
+	}
+
+	return res;
+}
+
 
 // String comparison
 bool strcomp(const char* str1, const char* str2)
@@ -81,13 +98,38 @@ void handle_cmd(const char* cmd)
 	else if (strcomp(cmd, "help"))
 	{
         	print("\nAVAILABLE COMMANDS\n");
+			print("cat - Print the contents of a file\n");
         	print("clear - Clear the screen\n");
        		print("help - Show this help message\n");
-        	print("exit - Exit the shell\n");
+			print("ls - List files and directories\n");
+        	print("test - Run tests on the kernel and its functions\n");
     	}
 	else if (strcomp(cmd, "ls"))
 	{
 		ls();
+	}
+	else if (strcomp(cmd, "test"))
+	{ 
+    	print("\nKurios32 Testing Utility\n\n");
+    	print("\nNo testcase was specified. For a list of available test cases, type \"test list\".\n");
+    }
+	else if (strcomp(cmd, "test list"))
+	{
+		test_list();
+	}
+	else if (strcomp_n(cmd, "test ", 5))
+	{
+		const char* test_id_str = cmd + 5;
+		int test_id = atoi(test_id_str);
+		
+		if (test_id > 0)
+		{
+			test_exec(test_id);
+		}
+		else
+		{
+			print("\n[ERR] Invalid test number. For a list of available test cases, use the 'test list' command.\n");
+		}
 	}
 	else
 	{

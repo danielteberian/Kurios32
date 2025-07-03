@@ -11,6 +11,8 @@
 #include "task.h"
 #include "vfs.h"
 
+#include "testing/test.h"
+
 #include <stdint.h>
 
 // Next available memory address
@@ -233,9 +235,11 @@ extern "C" void kmain(mb_info_t* mbt, uint32_t magic)
 	kbd_init();
 	// Initialize multitasking
 	task_init();
+	// Initialize the testing framework
+	test_init();
 	// Initialize the shell
 	sh_init();
-
+	
 	// Enable interrupts
 	asm volatile("sti");
 
