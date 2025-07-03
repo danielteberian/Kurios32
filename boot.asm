@@ -56,6 +56,11 @@ start:
 	cli
 	; Set up stack
 	mov esp, stack_space
+
+	; Push Multiboot magic number and info struct onto stack
+	push eax
+	push ebx
+
 	; Call the entry point for the kernel
 	call kmain
 	; Halt CPU

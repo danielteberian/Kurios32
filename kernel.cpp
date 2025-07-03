@@ -6,8 +6,10 @@
 #include "idt.h"
 #include "kbd.h"
 #include "mem.h"
+#include "multiboot.h"
 #include "sh.h"
 #include "task.h"
+#include "vfs.h"
 
 #include <stdint.h>
 
@@ -149,17 +151,30 @@ void print(const char* str)
 
 
 // The kernel's entry point
-extern "C" void kmain()
+extern "C" void kmain(mb_info_t* mbt, uint32_t magic)
 {
 	extern uint32_t end;
 
 	// Clear the screen
 	clear();
+
+	mem_init((uint32_t)&end);
+
+	print("[INFO] Filesystem initialized.\n");
+
+	if (magic != 0x2BADB002)
+	{
+		print("[FATAL ERROR] Invalid multiboot magic number.\n");
+		return;
+	}
+
 	// Welcome message
 	print("[INFO] KERNEL LOADED SUCCESSFULLY.\n");
 
 	// Initialize GDT
 	gdt_init();
+	// Initialize VFS
+	vfs_init(mbt);
 	// Initialize the IDT
 	idt_init();
 	// Initialize the keyboard driver

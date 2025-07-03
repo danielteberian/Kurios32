@@ -16,13 +16,13 @@ struct vfs_node
 	// The size of the file/directory
 	uint32_t size;
 	// Where the file/directory is located in the memory
-	uint32_t location
+	uint32_t location;
 	// Whether the node is a file (0) or a directory (5)
 	uint32_t type;
 };
 
 // The API
-void vfs_init(multiboot_info_t* mbt);
+void vfs_init(mb_info_t* mbt);
 
 uint32_t f_open(const char* fname);
 uint32_t f_read(uint32_t node_idx, char* buffer, uint32_t size);

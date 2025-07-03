@@ -12,7 +12,7 @@ LD_F = -T linker.ld -nostdlib -lgcc
 
 # Files to include
 ASM_S = boot.asm gdt_asm.asm switch.asm
-CPP_S = kernel.cpp sh.cpp kbd.cpp idt.cpp task.cpp gdt.cpp
+CPP_S = kernel.cpp sh.cpp kbd.cpp idt.cpp task.cpp gdt.cpp vfs.cpp
 OBJ = $(ASM_S:.asm=.o) $(CPP_S:.cpp=.o)
 KERNEL = kurios32.bin
 
