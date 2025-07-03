@@ -3,6 +3,15 @@
 #ifndef KERNEL_H
 #define KERNEL_H
 
+#include <stdint.h>
+
+
+// Print hexadecimal
+void print_hex(uint32_t n);
+
+// Print decimal
+void print_dec(uint32_t n);
+
 // Print string
 void print(const char* str);
 
@@ -48,6 +57,7 @@ enum vga_color
 	C_YELLOW = 14,
 	C_WHITE = 15,
 };
+
 
 
 

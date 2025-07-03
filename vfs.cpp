@@ -21,6 +21,16 @@ bool strcmp(const char* str1, const char* str2)
 }
 
 
+// File statistics
+void f_stat(uint32_t node_idx, vfs_node* node_out)
+{
+	if (node_idx < file_count && node_out != 0)
+	{
+		*node_out = file_tab[node_idx];
+	}
+}
+
+
 // Convert octal to decimal
 uint32_t oct_to_dec(const char *oct)
 {
@@ -51,17 +61,25 @@ void vfs_init(mb_info_t* mbt)
 	uint32_t initrd_end = mod->mod_end;
 
 	print("[INFO] INITRD LOCATED AT 0x\n");
+	print_hex(initrd_addr);
+	print(", End: 0x");
+	print_hex(initrd_end);
+	print("\n");
 
 	uint32_t addr = initrd_addr;
 
 	while (addr < initrd_end && file_count < MAX_FILES)
 	{
-		// Tar header is 512 bytes
 		char* header = (char*)addr;
-		// Find where the tar ends (block with all zeroes)
+
+		if (header[0] == '\0')
+		{
+			break;
+		}
+
 		char size_oct[12];
 
-		for (int i = 0; i < 11; ++i)
+		for (int i=0; i < 11; ++i)
 		{
 			size_oct[i] = header[124 + i];
 		}
@@ -69,28 +87,30 @@ void vfs_init(mb_info_t* mbt)
 		size_oct[11] = '\0';
 		uint32_t size = oct_to_dec(size_oct);
 
-		// Copy the file name
 		for (int i = 0; i < 100; ++i)
 		{
 			file_tab[file_count].name[i] = header[i];
-
-			// Make sure it is null-terminated
-			file_tab[file_count].name[99] = '\0';
-			file_tab[file_count].size = size;
-			file_tab[file_count].location = addr + 512;
-
-			print("[INFO] Discovered file: ");
-			print(file_tab[file_count].name);
-
-			file_count++;
-
-			// Go to the next header block
-			addr += 512 + ((size + 511) & ~511);
 		}
 
-		// Info message
-		print("[INFO] VFS has been initialized.\n");
+		file_tab[file_count].name[99] = '\0';
+		file_tab[file_count].size = size;
+		file_tab[file_count].type = header[156];
+		file_tab[file_count].location = addr + 512;
+
+		print("[INFO] File located: ");
+		print(file_tab[file_count].name);
+		print("' , Filesize: ");
+		print_dec(size);
+		print(" bytes\n");
+
+		file_count++;
+
+		addr += 512 + ((size + 511) & ~511);
 	}
+
+	print("[INFO] VFS initialized with ");
+	print_dec(file_count);
+	print(" files.\n");
 }
 
 

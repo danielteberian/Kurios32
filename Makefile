@@ -22,7 +22,12 @@ KERNEL = kurios32.bin
 
 all: $(KERNEL)
 
-$(KERNEL): $(OBJ)
+# Build filesystem
+initrd.tar:
+	mkdir -p initrd
+	tar -cf initrd.tar -C initrd .
+
+$(KERNEL): $(OBJ) initrd.tar
 	$(CPP) -o $(KERNEL) $(OBJ) $(LD_F)
 
 %.o: %.asm
@@ -32,7 +37,11 @@ $(KERNEL): $(OBJ)
 	$(CPP) $(CPP_F) $< -o $@
 
 run: all
-	qemu-system-i386 -kernel $(KERNEL)
+	qemu-system-i386 -kernel $(KERNEL) -initrd initrd.tar
 
 clean:
 	rm -f $(OBJ) $(KERNEL)
+
+clean_all:
+	rm -f $(OBJ) $(KERNEL) initrd.tar
+	rm -rf initrd

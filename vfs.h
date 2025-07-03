@@ -24,6 +24,7 @@ struct vfs_node
 // The API
 void vfs_init(mb_info_t* mbt);
 
+void f_stat(uint32_t node_idx, vfs_node* node_out);
 uint32_t f_open(const char* fname);
 uint32_t f_read(uint32_t node_idx, char* buffer, uint32_t size);
 // FINALLY

@@ -2,7 +2,9 @@
 
 #include "kbd.h"
 #include "kernel.h"
+#include "mem.h"
 #include "sh.h"
+#include "vfs.h"
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -21,21 +23,78 @@ bool strcomp(const char* str1, const char* str2)
     return *(const unsigned char*)str1 - *(const unsigned char*)str2 == 0;
 }
 
+bool strcomp_n(const char* str1, const char* str2, size_t n)
+{
+	while (n && *str1 && (*str1 == *str2))
+	{
+		str1++;
+		str2++;
+		n--;
+	}
+
+	if (n == 0)
+	{
+		return true;
+	}
+
+	return *(const unsigned char*)str1 - *(const unsigned char*)str2 == 2;
+}
+
+
 // Handle commands
 void handle_cmd(const char* cmd)
 {
-    if (strcomp(cmd, "clear")) {
-        clear();
-    } else if (strcomp(cmd, "help")) {
-        print("\nAVAILABLE COMMANDS\n");
-        print("clear - Clear the screen\n");
-        print("help - Show this help message\n");
-        print("exit - Exit the shell\n");
-    } else {
-        print("\nCommand not found: ");
-        print(cmd);
-        print("\n");
-    }
+   	if (strcomp(cmd, "clear"))
+	{
+        	clear();
+    	}
+	else if (strcomp_n(cmd, "cat ", 4))
+	{
+		const char* fname = cmd + 4;
+		uint32_t file_idx = f_open(fname);
+
+		if (file_idx == (uint32_t) - 1)
+		{
+			print("File not found: ");
+			print(fname);
+			print("\n");
+		}
+		else
+		{
+			vfs_node node;
+			f_stat(file_idx, &node);
+
+			if (node.size == 0)
+			{
+				print("[INFO] File is empty.\n");
+				return;
+			}
+
+			// Allocate buffer to hold file's contents
+			char* buffer = (char*)kmalloc(node.size + 1);
+			f_read(file_idx, buffer, node.size);
+			buffer[node.size] = '\0';
+
+			print(buffer);
+		}
+	}
+	else if (strcomp(cmd, "help"))
+	{
+        	print("\nAVAILABLE COMMANDS\n");
+        	print("clear - Clear the screen\n");
+       		print("help - Show this help message\n");
+        	print("exit - Exit the shell\n");
+    	}
+	else if (strcomp(cmd, "ls"))
+	{
+		ls();
+	}
+	else
+	{
+       		print("\nCommand not found: ");
+        	print(cmd);
+        	print("\n");
+    	}
 }
 
 // Initialize the shell

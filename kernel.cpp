@@ -81,6 +81,56 @@ void scroll()
 }
 
 
+// Print decimal
+void print_dec(uint32_t n)
+{
+	if (n == 0)
+	{
+		print_char('0');
+		return;
+	}
+
+	char buff[11];
+	int i = 9;
+	buff[10] = '\0';
+
+	while (n > 0)
+	{
+		buff[i--] = (n % 10) + '0';
+		n /= 10;
+	}
+
+	print(buff + i + 1);
+}
+
+
+// Print hexadecimal
+void print_hex(uint32_t n)
+{
+	char buff[11] = "0x";
+	char* hex = "0123456789ABCDEF";
+	int i = 9;
+
+	if (n == 0)
+	{
+		buff[2] = '0';
+		buff[3] = '\0';
+	}
+	else
+	{
+		while (n != 0)
+		{
+			buff[i--] = hex[n % 16];
+			n /= 16;
+		}
+	}
+
+	buff[10] = '\0';
+	print(buff + i + 1);
+}
+
+
+
 // Print a single character
 void print_char(char c)
 {
@@ -173,6 +223,8 @@ extern "C" void kmain(mb_info_t* mbt, uint32_t magic)
 
 	// Initialize GDT
 	gdt_init();
+	// Initialize memory management
+	mem_init((uint32_t)&end);
 	// Initialize VFS
 	vfs_init(mbt);
 	// Initialize the IDT
