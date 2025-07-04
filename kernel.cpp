@@ -1,6 +1,6 @@
 // The kernel :D
 
-
+//#include "fontman.h"
 #include "gdt.h"
 #include "kernel.h"
 #include "idt.h"
@@ -11,9 +11,14 @@
 #include "task.h"
 #include "vfs.h"
 
+#include "graphics/graphics.h"
 #include "testing/test.h"
 
 #include <stdint.h>
+
+
+// Whether or not graphics are enabled
+static bool graphics_mode = false;
 
 // Next available memory address
 static uint32_t free_memory_address = 0;
@@ -21,6 +26,9 @@ static uint32_t free_memory_address = 0;
 // Cursor position tracking
 int cx = 0;
 int cy = 0;
+
+// This is the default color to use for text
+const uint8_t DEFAULT_COLOR = C_LIGHT_GREY | (C_BLACK << 4);
 
 // Pointer to the VGA text mode buffer
 volatile unsigned short* vmem = (unsigned short*)0xB8000;
@@ -179,12 +187,20 @@ void print_char(char c)
 // Clear the screen
 void clear()
 {
-	unsigned char attr_byte = 0x07;
-	unsigned short blank = ' ' | (attr_byte << 8);
-
-	for (int i = 0; i < 80 * 25; i++)
+	// If graphics are enabled
+	if (graphics_mode)
 	{
-		vmem[i] = blank;
+		graphics_clear(rgb(0, 0, 0));
+	}
+	else
+	{
+		unsigned char attr_byte = 0x07;
+		unsigned short blank = ' ' | (attr_byte << 8);
+
+		for (int i = 0; i < 80 * 25; i++)
+		{
+			vmem[i] = blank;
+		}
 	}
 
 	cx = 0;
@@ -201,18 +217,115 @@ void print(const char* str)
 	}
 }
 
+// Print a single character with color
+void print_char_color(char c, uint8_t color_attr)
+{
+	unsigned short attr = color_attr << 8;
+
+	if (c == '\b')
+	{
+		if (cx > 0)
+		{
+			cx--;
+			vmem[cy * 80 + cx] = ' ' | attr;
+		}
+	}
+
+	else if (c == '\n')
+	{
+		cx = 0;
+		cy++;
+	}
+
+	else if (c >= ' ')
+	{
+		vmem[cy * 80 + cx] = c | attr;
+		cx++;
+	}
+
+	if (cx >= 80)
+	{
+		cx = 0;
+		cy++;
+	}
+
+	scroll();
+	update_cursor();
+}
+
+// Print a string of colored text
+void print_color(const char* str, uint8_t color)
+{
+	for (int i = 0; str[i] != '\0'; i++)
+	{
+		print_char_color(str[i], color);
+	}
+}
+
+// Add a VGA color attribute byte
+uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg)
+{
+	return fg | bg << 4;
+}
+
+
+// Print red text
+void print_red(const char* str)
+{
+    print_color(str, vga_entry_color(C_RED, C_BLACK));
+}
+
+// Print green text
+void print_green(const char* str)
+{
+	print_color(str, vga_entry_color(C_GREEN, C_BLACK));
+}
+
+// Print blue text
+void print_blue(const char* str)
+{
+	print_color(str, vga_entry_color(C_BLUE, C_BLACK));
+}
+
+// Print cyan text
+void print_cyan(const char* str)
+{
+	print_color(str, vga_entry_color(C_CYAN, C_BLACK));
+}
+
+// Print magenta text
+void print_magenta(const char* str)
+{
+	print_color(str, vga_entry_color(C_MAGENTA, C_BLACK));
+}
+
+// Print white text
+void print_white(const char* str)
+{
+	print_color(str, vga_entry_color(C_WHITE, C_BLACK));
+}
 
 // The kernel's entry point
 extern "C" void kmain(mb_info_t* mbt, uint32_t magic)
 {
 	extern uint32_t end;
 
+	graphics_mode = graphics_init(mbt);
+
 	// Clear the screen
 	clear();
 
 	mem_init((uint32_t)&end);
 
-	print("[INFO] Filesystem initialized.\n");
+	print_green("[INFO] Filesystem initialized.\n");
+
+	// A test for the graphics
+	if (graphics_mode)
+	{
+		draw_rect_full(100, 100, 200, 150, rgb(255, 0, 0));
+		draw_rect_full(150, 150, 200, 150, rgb(0, 255, 0));
+		draw_rect_full(200, 200, 200, 150, rgb(0, 0, 255));
+	}
 
 	if (magic != 0x2BADB002)
 	{
@@ -229,6 +342,8 @@ extern "C" void kmain(mb_info_t* mbt, uint32_t magic)
 	mem_init((uint32_t)&end);
 	// Initialize VFS
 	vfs_init(mbt);
+	// Initialize font-management system
+	// fontman_init();
 	// Initialize the IDT
 	idt_init();
 	// Initialize the keyboard driver

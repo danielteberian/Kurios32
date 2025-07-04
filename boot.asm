@@ -1,14 +1,46 @@
 ; This is the file the contains the Multiboot header and the entry point for the kernel
 
+; Set flags so that the kernel can gather information about video mode
+%define MULTIBOOT_HEADER_FLAGS 0x00000003
+
+
 ; Multiboot header
 section .multiboot
 align 4
 	; Magic number
 	dd 0x1BADB002
 	; Flags
-	dd 0x00
+	dd MULTIBOOT_HEADER_FLAGS
 	; Checksum
-	dd - (0x1BADB002 + 0x00)
+	dd - (0x1BADB002 + MULTIBOOT_HEADER_FLAGS)
+
+
+	; header_addr
+	; dd 0
+
+	; load_address
+	; dd 0
+
+	; load_end_address
+	; dd 0
+
+	; bss_end_addr
+	; dd 0
+
+	; entry_addr
+	; dd 0
+
+	; mode_type
+	; dd 0
+
+	; Width
+	; dd 1024
+
+	; Height
+	; dd 768
+
+	; Color depth
+	; dd 32
 
 
 ; Kernel entry point

@@ -1,5 +1,6 @@
 // Shell
 
+//#include "fontman.h"
 #include "kbd.h"
 #include "kernel.h"
 #include "mem.h"
@@ -100,6 +101,7 @@ void handle_cmd(const char* cmd)
         	print("\nAVAILABLE COMMANDS\n");
 			print("cat - Print the contents of a file\n");
         	print("clear - Clear the screen\n");
+			print("font - Manage the font used by the kernel\n");
        		print("help - Show this help message\n");
 			print("ls - List files and directories\n");
         	print("test - Run tests on the kernel and its functions\n");
@@ -131,6 +133,34 @@ void handle_cmd(const char* cmd)
 			print("\n[ERR] Invalid test number. For a list of available test cases, use the 'test list' command.\n");
 		}
 	}
+/*
+	// Font management
+	else if (strcomp_n(cmd, "font ", 5))
+	{
+		const char* subcmd = cmd + 5;
+
+		if (strcomp(subcmd, "list"))
+		{
+			font_list();
+		}
+
+		else if (strcomp_n(subcmd, "set", 4))
+		{
+			const char* font_name = subcmd + 4;
+
+			if (!font_set(font_name))
+			{
+				print_red("\n[ERR] No such font: ");
+				print(font_name);
+			}
+
+			else
+			{
+				print_white("Usage: font <list | set (name)>");
+			}
+		}
+	}
+*/
 	else
 	{
        		print("\nCommand not found: ");

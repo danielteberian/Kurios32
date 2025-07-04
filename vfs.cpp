@@ -175,3 +175,19 @@ void ls()
 		print("\n");
 	}
 }
+
+
+// Count files
+uint32_t file_get_count()
+{
+	return file_count;
+}
+
+// Get information about VFS node via direct index in the file table
+void f_stat_by_idx(uint32_t idx, vfs_node* node_out)
+{
+	if (idx < file_count && node_out != 0)
+	{
+		*node_out = file_tab[idx];
+	}
+}

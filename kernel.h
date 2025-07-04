@@ -21,6 +21,23 @@ void print_char(char c);
 // Clear screen, reset cursor position
 void clear();
 
+
+// Print red text
+void print_red(const char* str);
+// Print green text
+void print_green(const char* str);
+// Print blue text
+void print_blue(const char* str);
+// Print yellow text
+void print_yellow(const char* str);
+// Print cyan text
+void print_cyan(const char* str);
+// Print magenta text
+void print_magenta(const char* str);
+// Print white text
+void print_white(const char* str);
+
+
 // Write a byte to given I/O port
 static inline void ob(unsigned short port, unsigned char data)
 {
@@ -58,10 +75,9 @@ enum vga_color
 	C_WHITE = 15,
 };
 
-
-
-
-
+void print_char_color(char c, uint8_t color_attribute);
+void print_color(const char* str, uint8_t color);
+uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg);
 
 
 #endif
