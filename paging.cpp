@@ -9,11 +9,14 @@
 
 
 // Page directory for the kernel
-static uint32_t kernel_dir[PAGE_ITEMS] __attribute__((aligned(PAGE_SIZE)));
+uint32_t* kernel_dir = (uint32_t*)0; // Initialize to null
 
 // Initialize paging
 void paging_init()
 {
+    // Allocate and align the kernel directory
+    kernel_dir = (uint32_t*)kmalloc_a(PAGE_ITEMS * sizeof(uint32_t));
+
     // First, prepare for the kernel/heap by ID mapping the first 4 MB
     static uint32_t first_tab[PAGE_ITEMS] __attribute__((aligned(PAGE_SIZE)));
 
@@ -44,7 +47,7 @@ void paging_init()
 
 
 // Switch page directory
-void paging_ch(uint32_t* dir)
+void paging_cd(uint32_t* dir)
 {
     asm volatile
     (

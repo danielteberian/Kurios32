@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 
+extern uint32_t* kernel_dir;
 
 // Initialize paging
 void paging_init();

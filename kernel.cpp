@@ -14,6 +14,9 @@
 
 #include "graphics/graphics.h"
 #include "testing/test.h"
+#include "usr/test_prog.h"
+#include "usr/uload.h"
+#include "usr/uswitch.h"
 
 #include <stdint.h>
 
@@ -37,17 +40,27 @@ volatile unsigned short* vmem = (unsigned short*)0xB8000;
 // Initialize memory management
 void mem_init(uint32_t kernel_end)
 {
-	// The memory should be free after the kernel ends
-	free_memory_address = kernel_end;
+    // The memory should be free after the kernel ends
+    free_memory_address = kernel_end;
 }
 
 uint32_t kmalloc(uint32_t size)
 {
-	uint32_t address = free_memory_address;
-	// Bump up the pointer (Bump it up, BUMP IT)
-	free_memory_address += size;
+    uint32_t ret = free_memory_address;
+    free_memory_address += size;
+    return ret;
+}
 
-	return address;
+uint32_t kmalloc_a(uint32_t size)
+{
+    if (free_memory_address & 0xFFFFF000)
+    {
+        free_memory_address &= 0xFFFFF000;
+        free_memory_address += 0x1000;
+    }
+    uint32_t ret = free_memory_address;
+    free_memory_address += size;
+    return ret;
 }
 
 // Updates the cursor on the screen
@@ -306,6 +319,14 @@ void print_white(const char* str)
 	print_color(str, vga_entry_color(C_WHITE, C_BLACK));
 }
 
+// The entry point for the system's shell
+extern "C" void sh_entry()
+{
+	sh_init();
+	asm volatile("sti");
+	sh_loop();
+}
+
 // The kernel's entry point
 extern "C" void kmain(mb_info_t* mbt, uint32_t magic)
 {
@@ -355,14 +376,22 @@ extern "C" void kmain(mb_info_t* mbt, uint32_t magic)
 	task_init();
 	// Initialize the testing framework
 	test_init();
-	// Initialize the shell
-	sh_init();
-	
-	// Enable interrupts
-	asm volatile("sti");
 
-	// Start shell
-	sh_loop();
+	// Load the test program
+	uint32_t u_eip;
+	uint32_t u_esp;
+
+	uint32_t* u_dir = uload(&u_eip, &u_esp);
+
+	// Switch to user page dir
+	paging_cd(u_dir);
+
+	set_kernel_stack((uint32_t)kmalloc(4096) + 4096);
+
+	// Enter user mode!
+	enter_umode(u_eip, u_esp);
+
+	sh_entry();
 
 	// If you get here, brokey
 	print("FATAL ERROR: SHELL EXITED UNEXPECTEDLY. BIG DEALIO.\n");

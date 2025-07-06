@@ -177,7 +177,7 @@ void sh_init()
 }
 
 // The shell's main loop
-void sh_loop()
+extern "C" void sh_loop()
 {
     char cmd_buffer[MAX_CMD_LENGTH];
     size_t buff_pos = 0;
