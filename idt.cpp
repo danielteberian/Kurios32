@@ -9,6 +9,11 @@
 struct idt_item idt[IDT_SIZE];
 struct idt_ptr idt_p;
 
+// Syscall handler
+extern "C" void syscall_handler();
+
+// A timer
+volatile uint32_t sys_ticks = 0;
 
 // These are external assembly functions that load IDT and handle interrupts
 extern "C"
@@ -21,14 +26,28 @@ extern "C"
 
 extern "C" void timer_handler_main()
 {
-    ob(0x20, 0x20);
-    scheduler();
+	sys_ticks++;
+	ob(0x20, 0x20);
+    	scheduler();
 }
 
 // This handles generic interrupts.
 extern "C" void fault_handler()
 {
     ob(0x20, 0x20);
+}
+
+// Sleep
+void sleep_in_ms(uint32_t ms)
+{
+	// PIT is 100Hz, so 1 tick = 10ms.
+	uint32_t wait_time = ms / 10;
+	uint32_t wakeup = sys_ticks + wait_time;
+
+	while (sys_ticks < wakeup)
+	{
+		asm volatile("sti; hlt; cli");
+	}
 }
 
 
@@ -55,6 +74,8 @@ void idt_init()
 
     idt_set_gate(32, (uint32_t)timer_handler, 0x08, 0x8E);
     idt_set_gate(33, (uint32_t)kbd_handler, 0x08, 0x8E);
+    // Syscall interrupt
+    idt_set_gate(0x80, (uint32_t)syscall_handler, 0x08, 0xEE);
 
     // Remap PIC
     ob(0x20, 0x11);

@@ -7,6 +7,7 @@
 #include "kbd.h"
 #include "mem.h"
 #include "multiboot.h"
+#include "paging.h"
 #include "sh.h"
 #include "task.h"
 #include "vfs.h"
@@ -340,6 +341,8 @@ extern "C" void kmain(mb_info_t* mbt, uint32_t magic)
 	gdt_init();
 	// Initialize memory management
 	mem_init((uint32_t)&end);
+	// Initialize paging
+	paging_init();
 	// Initialize VFS
 	vfs_init(mbt);
 	// Initialize font-management system

@@ -5,7 +5,6 @@
 
 #include <stdint.h>
 
-
 // Defines a GDT entry
 struct gdt_item
 {
@@ -65,5 +64,6 @@ __attribute__((packed));
 // Initialize GDT
 void gdt_init();
 
+void set_kernel_stack(uint32_t stack);
 
 #endif

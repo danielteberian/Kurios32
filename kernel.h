@@ -3,6 +3,7 @@
 #ifndef KERNEL_H
 #define KERNEL_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 
@@ -20,7 +21,6 @@ void print_char(char c);
 
 // Clear screen, reset cursor position
 void clear();
-
 
 // Print red text
 void print_red(const char* str);

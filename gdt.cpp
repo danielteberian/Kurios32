@@ -37,7 +37,7 @@ void write_tss(int32_t num, uint16_t ss0, uint32_t esp0)
 	uint32_t base = (uint32_t)&tss;
 	uint32_t limit = base + sizeof(tss);
 
-	gdt_set_gate(num, base, limit, 0xE9, 0x00);
+	gdt_set_gate(num, base, limit, 0x89, 0x00);
 
 	// Clear out the TSS
 	for (int i = 0; i < sizeof(tss); ++i)
@@ -47,8 +47,13 @@ void write_tss(int32_t num, uint16_t ss0, uint32_t esp0)
 
 	tss.ss0 = ss0;
 	tss.esp0 = esp0;
-	tss.cs = 0x0b;
-	tss.ss = tss.ds = tss.es = tss.fs = tss.gs = 0x13;
+	tss.cs = 0x1B;
+	tss.ss = tss.ds = tss.es = tss.fs = tss.gs = 0x23;
+}
+
+void set_kernel_stack(uint32_t stack)
+{
+	tss.esp0 = stack;
 }
 
 
