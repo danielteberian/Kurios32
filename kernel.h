@@ -3,6 +3,8 @@
 #ifndef KERNEL_H
 #define KERNEL_H
 
+#include "error.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 

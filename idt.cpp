@@ -98,5 +98,5 @@ void idt_init()
 
     // Load IDT
     load_idt(&idt_p);
-    print("[INFO] IDT initialized\n");
+    log(LOG_INFO, "IDT initialized.");
 }

@@ -80,10 +80,10 @@ void gdt_init()
 	// Load GDT
 	flush_gdt((uint32_t)&gdt_p);
 	// Print a message
-	print("\n[INFO] GDT INITIALIZED.\n");
+	log(LOG_INFO,"GDT initialized.");
 
 	// Load TSS
 	flush_tss();
 	// Print message
-	print("\n[INFO] TSS INITIALIZED.\n");
+	log(LOG_INFO, "TSS initialized.");
 }

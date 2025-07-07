@@ -1,6 +1,7 @@
 // Shell
 
 //#include "fontman.h"
+#include "debug.h"
 #include "kbd.h"
 #include "kernel.h"
 #include "mem.h"
@@ -10,6 +11,18 @@
 
 #include <stddef.h>
 #include <stdbool.h>
+
+
+#define MAX_EXT_CMD 8
+
+struct ext_cmd_items
+{
+	const char* name;
+	sh_cmd_f handler;
+};
+
+static ext_cmd_items ext_cmds[MAX_EXT_CMD];
+static int ext_cmd_count = 0;
 
 
 #define MAX_CMD_LENGTH 256
@@ -161,8 +174,32 @@ void handle_cmd(const char* cmd)
 		}
 	}
 */
-	else
+    else
 	{
+		for (int i = 0; i < ext_cmd_count; ++i)
+		{
+			int len = 0;
+
+			while (cmd[len] && ext_cmds[i].name[len] && cmd[len] == ext_cmds[i].name[len])
+			{
+				len++;
+			}
+			
+			if (ext_cmds[i].name[len] == 0 && (cmd[len] == ' '))
+			{
+				const char* args = cmd + len;
+
+				while (*args == ' ')
+				{
+					++args;
+				}
+
+				ext_cmds[i].handler(args);
+				return;
+			}
+		}
+
+
        		print("\nCommand not found: ");
         	print(cmd);
         	print("\n");
@@ -172,6 +209,7 @@ void handle_cmd(const char* cmd)
 // Initialize the shell
 void sh_init()
 {
+	dregsh();
     print("Welcome to Kurios32\n");
     print("Type 'help' for a list of commands\n");
 }
@@ -220,4 +258,14 @@ extern "C" void sh_loop()
             print_char(c);
         }
     }
+}
+
+extern "C" void reg_sh_cmd(const char* name, sh_cmd_f handler)
+{
+	if (ext_cmd_count < MAX_EXT_CMD)
+	{
+		ext_cmds[ext_cmd_count].name = name;
+		ext_cmds[ext_cmd_count].handler = handler;
+		ext_cmd_count++;
+	}
 }

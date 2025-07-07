@@ -307,6 +307,12 @@ void print_cyan(const char* str)
 	print_color(str, vga_entry_color(C_CYAN, C_BLACK));
 }
 
+// Print yellow text
+void print_yellow(const char* str)
+{
+	print_color(str, vga_entry_color(C_YELLOW, C_BLACK));
+}
+
 // Print magenta text
 void print_magenta(const char* str)
 {
@@ -339,7 +345,7 @@ extern "C" void kmain(mb_info_t* mbt, uint32_t magic)
 
 	mem_init((uint32_t)&end);
 
-	print_green("[INFO] Filesystem initialized.\n");
+	log(LOG_INFO, "Filesystem initialized.");
 
 	// A test for the graphics
 	if (graphics_mode)
@@ -351,12 +357,12 @@ extern "C" void kmain(mb_info_t* mbt, uint32_t magic)
 
 	if (magic != 0x2BADB002)
 	{
-		print("[FATAL ERROR] Invalid multiboot magic number.\n");
+		log(LOG_FATAL, "Invalid multiboot magic number.");
 		return;
 	}
 
 	// Welcome message
-	print("[INFO] KERNEL LOADED SUCCESSFULLY.\n");
+	log(LOG_INFO, "Kernel loaded successfully.");
 
 	// Initialize GDT
 	gdt_init();
@@ -377,6 +383,7 @@ extern "C" void kmain(mb_info_t* mbt, uint32_t magic)
 	// Initialize the testing framework
 	test_init();
 
+	/*
 	// Load the test program
 	uint32_t u_eip;
 	uint32_t u_esp;
@@ -390,11 +397,11 @@ extern "C" void kmain(mb_info_t* mbt, uint32_t magic)
 
 	// Enter user mode!
 	enter_umode(u_eip, u_esp);
-
+*/
 	sh_entry();
 
 	// If you get here, brokey
-	print("FATAL ERROR: SHELL EXITED UNEXPECTEDLY. BIG DEALIO.\n");
+	log(LOG_FATAL, "SHELL EXITED UNEXPECTEDLY. BIG DEALIO.");
 
 
 	// Halt the CPU

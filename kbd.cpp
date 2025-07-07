@@ -68,7 +68,7 @@ extern "C" void kbd_handler_main()
 void kbd_init()
 {
     // This is done via assembly. Prints a message anyway
-    print("[INFO] Keyboard driver initialized\n");
+    log(LOG_INFO, "Keyboard driver initialized.");
 }
 
 // Read a character from the keyboard buffer
