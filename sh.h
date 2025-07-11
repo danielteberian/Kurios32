@@ -8,13 +8,14 @@ extern "C" void sh_loop();
 // Initialize shell
 void sh_init();
 
+void convert_init();
 
 #ifndef __cplusplus
 extern "C"
 {
     #endif
     typedef void (*sh_cmd_f)(const char* args);
-    void reg_sh_cmd(const char* name, sh_cmd_f handler);
+    extern "C" void reg_sh_cmd(const char* name, sh_cmd_f handler);
 
 #ifndef __cplusplus
 }

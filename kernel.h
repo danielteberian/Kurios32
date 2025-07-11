@@ -80,6 +80,8 @@ enum vga_color
 void print_char_color(char c, uint8_t color_attribute);
 void print_color(const char* str, uint8_t color);
 uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg);
-
+void print_fl(double n);
+int atoi(const char* str);
+int strcmp(const char* str1, const char* str2);
 
 #endif

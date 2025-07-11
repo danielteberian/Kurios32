@@ -62,7 +62,7 @@ void memdump(uint32_t addr, uint32_t count)
 }
 
 typedef void (*sh_cmd_f)(const char* args);
-extern void reg_sh_cmd(const char* name, sh_cmd_f man);
+extern "C" void reg_sh_cmd(const char* name, sh_cmd_f handler);
 
 static void dcmd(const char* args)
 {
@@ -178,6 +178,7 @@ static void dcmd(const char* args)
         print("Usage: debug log <msg> | debug mem <addr> [count]\n");
     }
 }
+
 
 void dregsh()
 {

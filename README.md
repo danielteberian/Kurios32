@@ -2,6 +2,11 @@
 A 32-bit kernel, written in C++, that can (probably) run on real hardware.
 
 
+## Features:
+ - A working command-line interpreter
+ - Some basic commands
+ - Colored text!
+ - A logging system
 
 # TODO:
  - Handle arrow keys

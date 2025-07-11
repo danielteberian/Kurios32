@@ -1,25 +1,103 @@
 // A basic VFS implementation for the kernel
 
+#include <stddef.h>
+#include <stdint.h>
+
 #include "kernel.h"
+#include "mem.h"
 #include "vfs.h"
 
+
+// Forward declaration
+int strcmp(const char* str1, const char* str2);
 
 // This array stores information about the files in the initrd
 static vfs_node file_tab[MAX_FILES];
 static uint32_t file_count = 0;
+// Timestamp stuff
+static uint32_t vfs_time = 0;
+static uint32_t next_f_loc = 0x100000;
 
-// This is a simple method for comparing strings
-bool strcmp(const char* str1, const char* str2)
+
+// Create a file
+uint32_t vfs_new(const char* name)
 {
-	while (*str1 && (*str1 == *str2))
+	if (file_count >= MAX_FILES)
 	{
-		str1++;
-		str2++;
+		// No space
+		return (uint32_t) - 1;
 	}
 
-	return *(const unsigned char*)str1 - *(const unsigned char*)str2 == 0;
+	for (uint32_t i = 0; i < file_count; ++i)
+	{
+		if (strcmp(file_tab[i].name, name) == 0)
+		{
+			return i;
+		}
+	}
+
+	vfs_node* node = &file_tab[file_count];
+
+	for (int i = 0; i < 100; ++i)
+	{
+		node -> name[i] = 0;
+	}
+
+	for (int i = 0; name[i] && i < 99; ++i)
+	{
+		node -> name[i] = name[i];
+	}
+
+	node -> size = 0;
+	node -> location = next_f_loc;
+	node -> type = 0;
+	node -> created = vfs_time++;
+	node -> modified = node -> created;
+	// 1KB by default
+	node -> data = (char*)kmalloc(1024);
+
+	++file_count;
+	next_f_loc += 1024;
+	return file_count - 1;
 }
 
+
+uint32_t fwrite(uint32_t node_idx, const char* buffer, uint32_t len)
+{
+	if (node_idx >= file_count)
+	{
+		return 0;
+	}
+
+	vfs_node* node = &file_tab[node_idx];
+
+	// This limit is temporary.
+	if (len > 1024)
+	{
+		len = 1024;
+	}
+
+	for (uint32_t i = 0; i < len; ++i)
+	{
+		node -> data[i] = buffer[i];
+	}
+
+	node -> size = len;
+	node -> modified = vfs_time++;
+
+	return len;
+}
+
+
+void vfs_update_timestamp(uint32_t node_idx)
+{
+	if (node_idx >= file_count)
+	{
+		return;
+	}
+
+	file_tab[node_idx].modified = vfs_time++;
+}
 
 // File statistics
 void f_stat(uint32_t node_idx, vfs_node* node_out)

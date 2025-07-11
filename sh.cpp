@@ -9,6 +9,8 @@
 #include "testing/test.h"
 #include "vfs.h"
 
+#include "util/convert.h"
+
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -114,7 +116,8 @@ void handle_cmd(const char* cmd)
         	print("\nAVAILABLE COMMANDS\n");
 			print("cat - Print the contents of a file\n");
         	print("clear - Clear the screen\n");
-			print("font - Manage the font used by the kernel\n");
+			print("convert - Convert between units\n");
+			//print("font - Manage the font used by the kernel\n");
        		print("help - Show this help message\n");
 			print("ls - List files and directories\n");
         	print("test - Run tests on the kernel and its functions\n");
@@ -210,6 +213,7 @@ void handle_cmd(const char* cmd)
 void sh_init()
 {
 	dregsh();
+	convert_init();
     print("Welcome to Kurios32\n");
     print("Type 'help' for a list of commands\n");
 }

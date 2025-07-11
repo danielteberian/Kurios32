@@ -105,6 +105,23 @@ void scroll()
 }
 
 
+// Print a floating point number
+void print_fl(double n)
+{
+	if (n < 0)
+	{
+		print_char('-');
+		n = -n;
+	}
+
+	uint32_t int_part = (uint32_t)n;
+	print_dec(int_part);
+	print_char('.');
+	// Four decimal places
+	uint32_t frac_part = (uint32_t)((n - int_part) * 10000);
+	print_dec(frac_part);
+}
+
 // Print decimal
 void print_dec(uint32_t n)
 {
@@ -219,6 +236,18 @@ void clear()
 
 	cx = 0;
 	cy = 0;
+}
+
+// Compare two strings
+int strcmp(const char* str1, const char* str2)
+{
+	while (*str1 && (*str1 == *str2))
+	{
+		str1++;
+		str2++;
+	}
+
+	return *(const unsigned char*)str1 - *(const unsigned char*)str2;
 }
 
 
@@ -345,7 +374,6 @@ extern "C" void kmain(mb_info_t* mbt, uint32_t magic)
 
 	mem_init((uint32_t)&end);
 
-	log(LOG_INFO, "Filesystem initialized.");
 
 	// A test for the graphics
 	if (graphics_mode)
@@ -363,25 +391,33 @@ extern "C" void kmain(mb_info_t* mbt, uint32_t magic)
 
 	// Welcome message
 	log(LOG_INFO, "Kernel loaded successfully.");
-
 	// Initialize GDT
 	gdt_init();
+	log(LOG_INFO, "GDT initialized.");
 	// Initialize memory management
 	mem_init((uint32_t)&end);
+	log(LOG_INFO, "Memory management initialized.");
 	// Initialize paging
 	paging_init();
+	log(LOG_INFO, "Paging initialized.");
 	// Initialize VFS
 	vfs_init(mbt);
+	log(LOG_INFO, "Filesystem initialized.");
+
 	// Initialize font-management system
 	// fontman_init();
 	// Initialize the IDT
 	idt_init();
+	log(LOG_INFO, "IDT initialized.");
 	// Initialize the keyboard driver
 	kbd_init();
+	log(LOG_INFO, "Keyboard driver initialized.");
 	// Initialize multitasking
 	task_init();
+	log(LOG_INFO, "Multitasking initialized.");
 	// Initialize the testing framework
 	test_init();
+	log(LOG_INFO, "Testing framework initialized.");
 
 	/*
 	// Load the test program

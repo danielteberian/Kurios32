@@ -31,7 +31,7 @@ void test_init()
     // Kernel memory tests
     test_add("Kernel memory allocation", &test_mem);
     // VFS testing
-    //test_add("Virtual File System (VFS) functions", &test_vfs);
+    test_add("Virtual File System (VFS) integrity", &test_vfs);
 }
 
 
