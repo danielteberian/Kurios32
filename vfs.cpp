@@ -89,6 +89,131 @@ uint32_t fwrite(uint32_t node_idx, const char* buffer, uint32_t len)
 }
 
 
+// Save VFS state to a buffer that is written to disk
+uint32_t vfs_ser(char* buffer, uint32_t max_size)
+{
+	uint32_t offset = 0;
+
+	// How many files to write
+	if (offset + sizeof(uint32_t) > max_size)
+	{
+		return 0;
+	}
+
+	*((uint32_t*)(buffer + offset)) = file_count;
+	offset += sizeof(uint32_t);
+
+	// Write every file
+	for (uint32_t i = 0; i < file_count; i++)
+	{
+		vfs_node* node = &file_tab[i];
+
+		// Write node metadata
+		if (offset + sizeof(vfs_node) > max_size)
+		{
+			return 0;
+		}
+
+		*((vfs_node*)(buffer + offset)) = *node;
+		offset += sizeof(vfs_node);
+
+		// Write file data
+		if (offset + node -> size > max_size)
+		{
+			return 0;
+		}
+
+		for (uint32_t j = 0; j < node -> size; j++)
+		{
+			buffer[offset + j] = node -> data[j];
+		}
+
+		offset += node -> size;
+	}
+
+	// Adjust the size, given the newly written files
+	return offset;
+}
+
+// Load VFS state from buffer
+bool vfs_deser(char* buffer, uint32_t size)
+{
+	uint32_t offset = 0;
+
+	// Figure out how many files need to be loaded
+	if (offset + sizeof(uint32_t) > size)
+	{
+		return false;
+	}
+
+	file_count = *((uint32_t*)(buffer + offset));
+	offset += sizeof(uint32_t);
+
+	// Read files
+	for (uint32_t i = 0; i < file_count; i++)
+	{
+		if (offset + sizeof(vfs_node) > size)
+		{
+			return false;
+		}
+
+		file_tab[i] = *((vfs_node*)(buffer + offset));
+		offset += sizeof(vfs_node);
+
+		// Allocate for, and read data from files
+		file_tab[i].data = (char*)kmalloc(file_tab[i].size);
+
+		if (offset + file_tab[i].size > size)
+		{
+			return false;
+		}
+
+		for (uint32_t j = 0; j < file_tab[i].size; j++)
+		{
+			file_tab[i].data[j] = buffer[offset + j];
+		}
+
+		offset += file_tab[i].size;
+	}
+
+	return true;
+}
+
+// Save VFS to a designated file within the initrd
+void vfs_save()
+{
+	// 1 MB buffer
+	char* s_buffer = (char*)kmalloc(1024 * 1024);
+	uint32_t size = vfs_ser(s_buffer, 1024 * 1024);
+
+	if (size > 0)
+	{
+		uint32_t save_dat = vfs_new("vfs.dat");
+		fwrite(save_dat, s_buffer, size);
+		log(LOG_INFO, "VFS state written to disk.\n");
+	}
+}
+
+// Load VFS from a designated file
+void vfs_load()
+{
+	uint32_t s_file = f_open("vfs.dat");
+
+	if (s_file != (uint32_t) - 1)
+	{
+		vfs_node node;
+		f_stat(s_file, &node);
+		char* l_buffer = (char*)kmalloc(node.size);
+		f_read(s_file, l_buffer, node.size);
+
+		if (vfs_deser(l_buffer, node.size))
+		{
+			log(LOG_INFO, "VFS state has been loaded successfully.\n");
+		}
+	}
+}
+
+
 void vfs_update_timestamp(uint32_t node_idx)
 {
 	if (node_idx >= file_count)

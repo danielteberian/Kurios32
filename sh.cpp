@@ -127,6 +127,14 @@ void handle_cmd(const char* cmd)
 	{
 		ls();
 	}
+	else if (strcomp(cmd, "save"))
+	{
+		vfs_save();
+	}
+	else if (strcomp(cmd, "load"))
+	{
+		vfs_load();
+	}
 	else if (strcomp(cmd, "test"))
 	{ 
     	print("\nKurios32 Testing Utility\n\n");

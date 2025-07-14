@@ -36,6 +36,8 @@ uint32_t f_read(uint32_t node_idx, char* buffer, uint32_t size);
 uint32_t vfs_new (const char* name);
 uint32_t fwrite(uint32_t node_idx, const char* buffer, uint32_t len);
 uint32_t vfs_update_ts(uint32_t node_idx);
+void vfs_save();
+void vfs_load();
 // FINALLY
 void ls();
 
