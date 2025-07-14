@@ -18,6 +18,9 @@ static uint32_t file_count = 0;
 static uint32_t vfs_time = 0;
 static uint32_t next_f_loc = 0x100000;
 
+// A flag used to prevent recursive save/load operations
+static bool saving = false;
+
 
 // Create a file
 uint32_t vfs_new(const char* name)
@@ -182,16 +185,67 @@ bool vfs_deser(char* buffer, uint32_t size)
 // Save VFS to a designated file within the initrd
 void vfs_save()
 {
+	if (saving)
+	{
+		log(LOG_WARN, "\nVFS state is already being saved.\n");
+		return;
+	}
+
+	saving = true;
+
 	// 1 MB buffer
 	char* s_buffer = (char*)kmalloc(1024 * 1024);
-	uint32_t size = vfs_ser(s_buffer, 1024 * 1024);
 
-	if (size > 0)
+	uint32_t base_count = file_count;
+	uint32_t save_count = 0;
+
+	// Count files
+	for (uint32_t i = 0; i < file_count; i++)
 	{
-		uint32_t save_dat = vfs_new("vfs.dat");
-		fwrite(save_dat, s_buffer, size);
-		log(LOG_INFO, "VFS state written to disk.\n");
+		if (strcmp(file_tab[i].name, "vfs.dat") != 0)
+		{
+			save_count++;
+		}
 	}
+
+	uint32_t offset = 0;
+
+	// Write the number of files that are going to be saved
+	*((uint32_t*)(s_buffer + offset)) = save_count;
+	offset += sizeof(uint32_t);
+
+
+	// Write files, skip vfs.dat
+	for (uint32_t i = 0; i < file_count; i++)
+	{
+		if (strcmp(file_tab[i].name, "vfs.dat") == 0)
+		{
+			continue;
+		}
+
+		vfs_node* node = &file_tab[i];
+
+		// Write file metadata
+		*((vfs_node*)(s_buffer + offset)) = *node;
+		offset += sizeof(vfs_node);
+
+		// Write file data
+		if (node -> data)
+		{
+			for (uint32_t j = 0; j < node -> size; j++)
+			{
+				s_buffer[offset + j] = node -> data[j];
+			}
+		}
+
+		offset += node -> size;
+	}
+
+	// Write to vfs.dat
+	uint32_t save_dat = vfs_new("vfs.dat");
+	fwrite(save_dat, s_buffer, offset);
+	saving = false;
+	log(LOG_INFO, "\nVFS state has been written to disk.\n");
 }
 
 // Load VFS from a designated file
@@ -199,17 +253,36 @@ void vfs_load()
 {
 	uint32_t s_file = f_open("vfs.dat");
 
-	if (s_file != (uint32_t) - 1)
+	if (s_file == (uint32_t) - 1)
 	{
-		vfs_node node;
-		f_stat(s_file, &node);
-		char* l_buffer = (char*)kmalloc(node.size);
-		f_read(s_file, l_buffer, node.size);
+		log(LOG_ERROR, "\nVFS state file not found.\n");
+		return;
+	}
 
-		if (vfs_deser(l_buffer, node.size))
+	vfs_node node;
+	f_stat(s_file, &node);
+
+	char* l_buffer = (char*)kmalloc(node.size);
+	f_read(s_file, l_buffer, node.size);
+
+	// Free the existing file data before loading anything
+	for (uint32_t i = 0; i < file_count; i++)
+	{
+		if (file_tab[i].data && strcmp(file_tab[i].name, "vfs.dat") != 0)
 		{
-			log(LOG_INFO, "VFS state has been loaded successfully.\n");
+			// TODO: Use kfree
+			file_tab[i].data = nullptr;
 		}
+	}
+
+	// Load saved state
+	if (vfs_deser(l_buffer, node.size))
+	{
+		log(LOG_INFO, "\nVFS state has been loaded successfully.\n");
+	}
+	else
+	{
+		log(LOG_ERROR, "\nVFS state file is corrupted or invalid.\n");
 	}
 }
 
