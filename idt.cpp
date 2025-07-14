@@ -1,8 +1,8 @@
 // Interrupt descriptor table
 
-#include "idt.h"
-#include "kernel.h"
-#include "task.h"
+#include "include/idt.h"
+#include "include/kernel.h"
+#include "include/task.h"
 
 #define IDT_SIZE 256
 

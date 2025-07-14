@@ -1,7 +1,7 @@
 // Loads a program, deals with paging, and maps the code/stack
 
-#include "../mem.h"
-#include "../paging.h"
+#include "../include/mem.h"
+#include "../include/paging.h"
 #include "test_prog.h"
 
 #define U_STACK_TOP 0xBFFFF000

@@ -3,9 +3,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "kernel.h"
-#include "mem.h"
-#include "vfs.h"
+#include "include/kernel.h"
+#include "include/mem.h"
+#include "include/vfs.h"
 
 
 // Forward declaration

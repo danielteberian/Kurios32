@@ -1,7 +1,7 @@
 // Keyboard driver
 
-#include "kbd.h"
-#include "kernel.h"
+#include "include/kbd.h"
+#include "include/kernel.h"
 
 
 #define KBD_DATA 0x60

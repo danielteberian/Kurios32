@@ -1,7 +1,7 @@
 // Implementation of paging for the kernel
 
-#include "mem.h"
-#include "paging.h"
+#include "include/mem.h"
+#include "include/paging.h"
 
 
 #define PAGE_ITEMS 1024

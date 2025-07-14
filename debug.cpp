@@ -1,5 +1,5 @@
-#include "debug.h"
-#include "kernel.h"
+#include "include/debug.h"
+#include "include/kernel.h"
 
 #include <stddef.h>
 

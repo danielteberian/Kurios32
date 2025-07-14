@@ -1,8 +1,8 @@
 // Multitasking implementation
 
-#include "task.h"
-#include "kernel.h"
-#include "mem.h"
+#include "include/task.h"
+#include "include/kernel.h"
+#include "include/mem.h"
 #include <stddef.h>
 
 // Currently active task

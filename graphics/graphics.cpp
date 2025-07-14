@@ -1,7 +1,7 @@
 // Implementation of the basic graphics driver
 
 #include "graphics.h"
-#include "../kernel.h"
+#include "../include/kernel.h"
 
 
 // Display properties

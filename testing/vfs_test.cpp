@@ -1,9 +1,9 @@
 // These tests are designed to verify the integrity of the kernel's initrd
 
 #include "test.h"
-#include "../error.h"
-#include "../kernel.h"
-#include "../vfs.h"
+#include "../include/error.h"
+#include "../include/kernel.h"
+#include "../include/vfs.h"
 
 void test_vfs()
 {

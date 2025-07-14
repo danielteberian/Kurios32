@@ -1,7 +1,7 @@
 // Error handling and logging for the kernel
 
-#include "error.h"
-#include "kernel.h"
+#include "include/error.h"
+#include "include/kernel.h"
 
 
 // Strings for each log level

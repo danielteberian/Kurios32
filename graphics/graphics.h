@@ -5,7 +5,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "../multiboot.h"
+#include "../include/multiboot.h"
 
 // 32-bit color
 typedef uint32_t color_t;

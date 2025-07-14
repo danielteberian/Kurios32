@@ -1,7 +1,7 @@
 // Global Descriptor Table (GDT) implementation
 
-#include "gdt.h"
-#include "kernel.h"
+#include "include/gdt.h"
+#include "include/kernel.h"
 
 
 #define GDT_ITEMS 6

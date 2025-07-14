@@ -1,7 +1,7 @@
 // Implementation of the kernel's testing framework
 
 #include "test.h"
-#include "../kernel.h"
+#include "../include/kernel.h"
 
 #define MAX_TESTS 16
 

@@ -1,13 +1,13 @@
 // Shell
 
 //#include "fontman.h"
-#include "debug.h"
-#include "kbd.h"
-#include "kernel.h"
-#include "mem.h"
-#include "sh.h"
+#include "include/debug.h"
+#include "include/kbd.h"
+#include "include/kernel.h"
+#include "include/mem.h"
+#include "include/sh.h"
 #include "testing/test.h"
-#include "vfs.h"
+#include "include/vfs.h"
 
 #include "util/convert.h"
 

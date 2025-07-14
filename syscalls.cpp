@@ -1,8 +1,8 @@
 // Syscall handling for the kernel
 
-#include "kernel.h"
-#include "sh.h"
-#include "paging.h"
+#include "include/kernel.h"
+#include "include/sh.h"
+#include "include/paging.h"
 
 extern uint32_t* kernel_dir;
 

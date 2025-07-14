@@ -1,8 +1,8 @@
 // The kernel's conversion utility
 
 #include "convert.h"
-#include "../kernel.h"
-#include "../sh.h"
+#include "../include/kernel.h"
+#include "../include/sh.h"
 
 
 // The types of units that can be converted. This makes sure that only compatible units can be converted

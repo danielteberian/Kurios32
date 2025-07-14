@@ -1,8 +1,8 @@
 // Test cases for testing the memory management/allocation of the kernel
 
-#include "../kernel.h"
-#include "../mem.h"
-#include "../vfs.h"
+#include "../include/kernel.h"
+#include "../include/mem.h"
+#include "../include/vfs.h"
 
 void test_mem()
 {
