@@ -120,6 +120,7 @@ void handle_cmd(const char* cmd)
 			//print("font - Manage the font used by the kernel\n");
        		print("help - Show this help message\n");
 			print("ls - List files and directories\n");
+			print("parrot - Repeat a string for a given number of instances.\n");
         	print("test - Run tests on the kernel and its functions\n");
     	}
 	else if (strcomp(cmd, "ls"))
@@ -148,6 +149,58 @@ void handle_cmd(const char* cmd)
 		{
 			print("\n[ERR] Invalid test number. For a list of available test cases, use the 'test list' command.\n");
 		}
+	}
+
+
+	else if (strcomp_n(cmd, "parrot ", 6))
+	{
+		const char* args = cmd + 7;
+		char count_str[10];
+		for (int k = 0; k < 10; ++k) count_str[k] = 0;
+		int i = 0;
+
+		while (*args && *args != ' ' && i < 10)
+		{
+			count_str[i++] = *args++;
+		}
+
+		// Ignore spaces
+		if (*args == ' ')
+		{
+			args++;
+		}
+		else
+		{
+			print_cyan("\nParrot repeats a string for whatever number is provided to it.\n");
+			print_cyan("Usage: parrot <number> <string>\n");
+			return;
+		}
+
+		if (i == 0)
+		{
+			print_cyan("\nParrot repeats a string for whatever number is provided to it.\n");
+			print_cyan("Usage: parrot <number> <string>\n");
+			return;
+		}
+
+		int count = atoi(count_str);
+		const char* parrot_str = args;
+
+		if (*parrot_str == '\0')
+		{
+			// TODO: Better messages
+			print_cyan("\nParrot repeats a string for whatever number is provided to it.\n");
+			print_cyan("Usage: parrot <number> <string>\n");
+			return;
+		}
+
+		for (int j = 0; j < count; j++)
+		{
+			print_white(parrot_str);
+			print("\n");
+		}
+
+		print("\n");
 	}
 /*
 	// Font management
