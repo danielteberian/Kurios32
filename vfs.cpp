@@ -287,6 +287,8 @@ void vfs_load()
 }
 
 
+// This function is designed to update a file's timestamp.
+
 void vfs_update_timestamp(uint32_t node_idx)
 {
 	if (node_idx >= file_count)
@@ -326,9 +328,10 @@ uint32_t oct_to_dec(const char *oct)
 // Initialize VFS
 void vfs_init(mb_info_t* mbt)
 {
+	// Check for the presence of initrd modules
 	if (!(mbt->flags & MULTIBOOT_INFO_MODS))
 	{
-		print("[INFO] NO INITRD MODULE COULD BE FOUND\n");
+		log(LOG_INFO, "No initrd module was found.\n");
 		return;
 	}
 
@@ -336,9 +339,9 @@ void vfs_init(mb_info_t* mbt)
 	uint32_t initrd_addr = mod->mod_start;
 	uint32_t initrd_end = mod->mod_end;
 
-	print("[INFO] INITRD LOCATED AT 0x\n");
+	log(LOG_INFO, "An initrd has been located at 0x\n");
 	print_hex(initrd_addr);
-	print(", End: 0x");
+	log(LOG_INFO, ", Ending at: 0x");
 	print_hex(initrd_end);
 	print("\n");
 
@@ -373,20 +376,20 @@ void vfs_init(mb_info_t* mbt)
 		file_tab[file_count].type = header[156];
 		file_tab[file_count].location = addr + 512;
 
-		print("[INFO] File located: ");
+		print_cyan("A file has been located: ");
 		print(file_tab[file_count].name);
-		print("' , Filesize: ");
+		print_cyan("' , Filesize: ");
 		print_dec(size);
-		print(" bytes\n");
+		print_cyan(" bytes\n");
 
 		file_count++;
 
 		addr += 512 + ((size + 511) & ~511);
 	}
 
-	print("[INFO] VFS initialized with ");
+	print_cyan("The VFS has been initialized with ");
 	print_dec(file_count);
-	print(" files.\n");
+	print_cyan(" files.\n");
 }
 
 

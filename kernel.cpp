@@ -44,12 +44,14 @@ void mem_init(uint32_t kernel_end)
     free_memory_address = kernel_end;
 }
 
+/*
 uint32_t kmalloc(uint32_t size)
 {
     uint32_t ret = free_memory_address;
     free_memory_address += size;
     return ret;
 }
+*/
 
 uint32_t kmalloc_a(uint32_t size)
 {

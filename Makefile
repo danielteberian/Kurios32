@@ -12,7 +12,7 @@ LD_F = -T linker.ld -nostdlib -lgcc
 
 # Files to include
 ASM_S = asm/boot.asm asm/gdt_asm.asm asm/switch.asm asm/syscalls_asm.asm asm/page_fault_handler_asm.asm
-CPP_S = kernel.cpp sh.cpp kbd.cpp idt.cpp task.cpp gdt.cpp vfs.cpp testing/test.cpp testing/mem_test.cpp graphics/graphics.cpp paging.cpp syscalls.cpp usr/uswitch.cpp usr/uload.cpp error.cpp debug.cpp testing/vfs_test.cpp util/convert.cpp
+CPP_S = kernel.cpp sh.cpp kbd.cpp idt.cpp task.cpp gdt.cpp vfs.cpp testing/test.cpp testing/mem_test.cpp graphics/graphics.cpp paging.cpp syscalls.cpp usr/uswitch.cpp usr/uload.cpp error.cpp debug.cpp testing/vfs_test.cpp util/convert.cpp mem.cpp
 OBJ = $(ASM_S:.asm=.o) $(CPP_S:.cpp=.o)
 KERNEL = kurios32.bin
 
@@ -45,3 +45,14 @@ clean:
 clean_all:
 	rm -f $(OBJ) $(KERNEL) initrd.tar
 	rm -rf initrd
+
+# Create a filesystem with any existing data
+initrd.tar: $(wildcard initrd/*)
+	mkdir -p initrd
+	tar -cf initrd.tar -C initrd .
+
+
+# Extract and rebuild initrd
+extract_initrd:
+	mkdir -p initrd
+	tar -xf initrd.tar -C initrd 2>dev/null || true

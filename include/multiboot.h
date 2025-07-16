@@ -20,6 +20,18 @@
 #define MULTIBOOT_INFO_FRAMEBUFFER  0x00001000
 
 
+// This struct defines a Multiboot memory map
+typedef struct mb_memmap
+{
+    uint32_t size;
+    uint64_t addr;
+    uint32_t len;
+    uint32_t type;
+}
+__attribute__((packed)) mb_memmap_entry_t;
+
+
+
 typedef struct mb_mod
 {
     uint32_t mod_start;
