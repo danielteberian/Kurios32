@@ -7,12 +7,12 @@
 void test_mem()
 {
     print("[TEST] Testing kernel memory allocation...\n");
-    uint32_t addr1 = kmalloc(10);
+    uint32_t addr1 = (uint32_t)kmalloc(10);
     print("[TEST] Allocated 10 bytes at address: ");
     print_hex(addr1);
     print("\n");
 
-    uint32_t addr2 = kmalloc(20);
+    uint32_t addr2 = (uint32_t)kmalloc(20);
     print("[TEST] Allocated 20 bytes at address: ");
     print_hex(addr2);
     print("\n");

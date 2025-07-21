@@ -1,109 +1,156 @@
-// Implementation of paging for the kernel
+// Paging for the kernel
 
+#include "include/error.h"
+#include "include/kernel.h"
 #include "include/mem.h"
 #include "include/paging.h"
 
 
-#define PAGE_ITEMS 1024
-#define PAGE_SIZE 4096
+// Master page directory
+page_dir_t* k_dir = 0;
+// Active page directory
+page_dir_t* active_dir = 0;
 
 
-// Page directory for the kernel
-uint32_t* kernel_dir = (uint32_t*)0; // Initialize to null
+// Page fault handler
+extern "C" void page_fault_handler(uint32_t errc)
+{
+    uint32_t faddr;
+    asm volatile("mov %%cr2, %0" : "=r"(faddr));
+    print_red("\n [ERR] PAGE FAULT: ");
+    print_hex(faddr);
+    print("\n [ERR] Error code: ");
+    print_hex(errc);
 
-// Initialize paging
+    if (!(errc & 0x1))
+    {
+        print_red("\nPage not present.\n");
+    }
+
+    if (errc & 0x2)
+    {
+        print_red("\nPage is read-only, but an attempt was made to write to it.\n");
+    }
+
+    if (errc & 0x4)
+    {
+        print_red("\nPage is in usermode, but the kernel tried to access it.\n");
+    }
+
+    if (errc & 0x8)
+    {
+        print_red("\nAn attempt was made to overwrite reserved bits.\n");
+    }
+
+    if (errc & 0x10)
+    {
+        print_red("\nInstruction fetching error.\n");
+    }
+
+
+    punchout("The system was halted due to a page fault.");
+}
+
+
 void paging_init()
 {
-    // Allocate and align the kernel directory
-    kernel_dir = (uint32_t*)kmalloc_a(PAGE_ITEMS * sizeof(uint32_t));
+    // Allocate a frame from the kernel's page directory
+    uint32_t pdir = pmm_alloc_frame();
+    k_dir = (page_dir_t*)pdir;
 
-    // First, prepare for the kernel/heap by ID mapping the first 4 MB
-    static uint32_t first_tab[PAGE_ITEMS] __attribute__((aligned(PAGE_SIZE)));
-
-    for (uint32_t i = 0; i < PAGE_ITEMS; i++)
+    // Clear the directory
+    for (int i = 0; i < 1024; i++)
     {
-        first_tab[i] = (i * PAGE_SIZE) | 3;
+        k_dir -> tables[i] = 0 | PAGE_WRITE;
     }
 
-    kernel_dir[0] = ((uint32_t)first_tab) | 3;
+    k_dir -> tables_physical = pdir;
 
-    for (uint32_t i = 1; i < PAGE_ITEMS; i++)
+    // Create page tables, map kernel in higher half
+    extern uint32_t end;
+    uint32_t k_end_addr = (uint32_t)&end;
+
+    for (uint32_t vaddr = 0xC0000000; vaddr < 0xC0000000 + k_end_addr; vaddr += 0x1000)
     {
-        kernel_dir[i] = 0;
+        uint32_t paddr = vaddr - 0xC0000000;
+        map_page(k_dir, vaddr, paddr, PAGE_PRESENT | PAGE_WRITE);
     }
 
-    // Load page directory, enable paging
-    asm volatile
-    (
-        "mov %0, %%cr3\n"
-        "mov %%cr0, %%eax\n"
-        "or $0x80000000, %%eax\n"
-        "mov %%eax, %%cr0\n"
-        :
-        : "r"(kernel_dir)
-        : "eax"
+    // ID map first 4MB for HW access
+    for (uint32_t addr = 0; addr < 0x400000; addr += 0x1000)
+    {
+        map_page(k_dir, addr, addr, PAGE_PRESENT | PAGE_WRITE);
+    }
+
+    // Switch to new page directory
+    paging_cd(k_dir);
+
+    log(LOG_INFO, "Paging initialized.\n");
+}
+
+
+// Change paging dir
+void paging_cd(page_dir_t* dir)
+{
+    active_dir = dir;
+
+    asm volatile(
+        "mov %0, %%cr3"
+        :: "r"(dir -> tables_physical)
     );
 }
 
 
-// Switch page directory
-void paging_cd(uint32_t* dir)
+// Clone paging directory
+page_dir_t* page_cldir(page_dir_t* src)
 {
-    asm volatile
-    (
-        "mov %0, %%cr3" :: "r"(dir)
-    );
-}
+    uint32_t pdir = pmm_alloc_frame();
+    page_dir_t* new_dir = (page_dir_t*)pdir;
 
-
-// Create a new paging directory
-uint32_t* paging_mkdir()
-{
-    uint32_t* new_dir = (uint32_t*)kmalloc(PAGE_ITEMS * sizeof(uint32_t));
-
-    if (!new_dir)
+    for (int i = 0; i < 1024; i++)
     {
-        return nullptr;
+        new_dir -> tables[i] = 0 | PAGE_WRITE;
     }
 
-    // Copy kernel mappings
-    for (uint32_t i = 768; i < PAGE_ITEMS; i++)
+    new_dir -> tables_physical = pdir;
+
+
+    for (int i = 768; i < 1024; i++)
     {
-        new_dir[i] = kernel_dir[i];
+        if ((uint32_t)src -> tables[i] & PAGE_PRESENT)
+        {
+            new_dir -> tables[i] = src -> tables[i];
+        }
     }
 
-    // Zero-out userspace
-    for (uint32_t i = 0; i < 768; i++)
-    {
-        new_dir[i] = 0;
-    }
-
-    // Viola
     return new_dir;
 }
 
 
-// Maps a page with appropriate flags for the user/kernel
-void map_page(uint32_t* dir, uint32_t vaddr, uint32_t paddr, uint32_t flags)
+void map_page(page_dir_t* dir, uint32_t vaddr, uint32_t paddr, uint32_t flags)
 {
-    uint32_t dir_idx = vaddr >> 22;
-    uint32_t tab_idx = (vaddr >> 12) & 0x3FF;
+    uint32_t didx = vaddr >> 22;
+    uint32_t tidx = (vaddr >> 12) & 0x3FF;
 
-
-    // When needed, allocate a page table
-    if (!(dir[dir_idx] & 1))
+    if (!(dir -> tables[didx] & PAGE_PRESENT))
     {
-        uint32_t* new_tab = (uint32_t*)kmalloc(PAGE_ITEMS * sizeof(uint32_t));
+        uint32_t ptab = pmm_alloc_frame();
+        page_tab_t* new_tab = (page_tab_t*)ptab;
 
-        for (uint32_t i = 0; i < PAGE_ITEMS; i++)
+        for (int i = 0; i < 1024; i++)
         {
-            new_tab[i] = 0;
+            new_tab -> entries[i] = 0 | PAGE_WRITE;
         }
 
-        // Set the user/supervisor bit in the page directory's entry
-        dir[dir_idx] = ((uint32_t)new_tab) | (flags & 0x4) | 3;
+        dir -> tables[didx] = ptab | flags | PAGE_PRESENT;
     }
 
-    uint32_t* tab = (uint32_t*)(dir[dir_idx] & 0xFFFFF000);
-    tab[tab_idx] = (paddr & 0xFFFFF000) | (flags & 0x7) | 1;
+    page_tab_t* tab = (page_tab_t*)((uint32_t)dir -> tables[didx] & PAGE_FRAME_ADDRESS);
+    tab -> entries[tidx] = (paddr & PAGE_FRAME_ADDRESS) | flags | PAGE_PRESENT;
+}
+
+
+page_dir_t* get_dir()
+{
+    return active_dir;
 }

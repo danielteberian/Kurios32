@@ -1,21 +1,38 @@
-// Loads a program, deals with paging, and maps the code/stack
-
-#include "../include/mem.h"
-#include "../include/paging.h"
-#include "test_prog.h"
-
-#define U_STACK_TOP 0xBFFFF000
+#include <stdint.h>
+#include "include/paging.h"
 
 
-// This should return the user page directory
-uint32_t* uload(uint32_t* u_eip, uint32_t* u_esp)
+//  Defines an ELF header
+typedef struct
 {
-    // Create page directory
-    uint32_t* u_dir = paging_mkdir();
+    uint8_t ident;
+    uint16_t type;
+    uint16_t machine;
+    uint32_t version;
+    uint32_t entry;
+    uint32_t phoff;
+    uint32_t shoff;
+    uint32_t flags;
+    uint16_t ehsize;
+    uint16_t phentsize;
+    uint16_t phnum;
+} elf_header_t;
 
-    // Allocate physical memory for code
-    uint32_t code_p = kmalloc(PROG_SIZE);
-    // Allocate physical memory for stack
-    uint32_t stack_p1 = kmalloc(4096);
-    uint32_t stack_p2 = kmalloc(4096);
-}
+
+// Program header
+typedef struct
+{
+    uint32_t type;
+    uint32_t offset;
+    uint32_t vaddr;
+    uint32_t paddr;
+    uint32_t filesz;
+    uint32_t memsz;
+    uint32_t flags;
+    uint32_t align;
+} elf_program_header_t;
+
+#define PT_LOAD 1
+
+// Load ELF executable from buffer into a specified page directory
+uint32_t load_elf(page_dir_t* dir, uint8_t* elf_dat);

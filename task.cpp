@@ -31,7 +31,7 @@ void task_init()
 void task_new(void (*entry_point)())
 {
     task_t *new_task = (task_t*)kmalloc(sizeof(task_t));
-    uint32_t stack = kmalloc(4096);
+    uint32_t stack = (uint32_t)kmalloc(4096);
 
     // Set up the new task's registers
     new_task->regs.eip = (uint32_t)entry_point;

@@ -12,6 +12,9 @@ struct idt_ptr idt_p;
 // Syscall handler
 extern "C" void syscall_handler();
 
+extern "C" void page_fault_handler();
+
+
 // A timer
 volatile uint32_t sys_ticks = 0;
 
@@ -76,6 +79,8 @@ void idt_init()
     idt_set_gate(33, (uint32_t)kbd_handler, 0x08, 0x8E);
     // Syscall interrupt
     idt_set_gate(0x80, (uint32_t)syscall_handler, 0x08, 0xEE);
+    idt_set_gate(14, (uint32_t)page_fault_handler, 0x08, 0x8E);
+
 
     // Remap PIC
     ob(0x20, 0x11);

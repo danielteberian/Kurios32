@@ -1,106 +1,103 @@
-; This is the file the contains the Multiboot header and the entry point for the kernel
-
-; Set flags so that the kernel can gather information about video mode
-%define MULTIBOOT_HEADER_FLAGS 0x00000003
+; This file contains the basic code needed to set up paging and load the kernel correctly
 
 
-; Multiboot header
-section .multiboot
+PAGE_PRESENT equ 1
+PAGE_WRITE equ 2
+
+
+section.multiboot
 align 4
-	; Magic number
 	dd 0x1BADB002
-	; Flags
-	dd MULTIBOOT_HEADER_FLAGS
-	; Checksum
-	dd - (0x1BADB002 + MULTIBOOT_HEADER_FLAGS)
+	dd 0x00
+	dd - (0x1BADB002 + 0x00)
 
 
-	; header_addr
-	; dd 0
-
-	; load_address
-	; dd 0
-
-	; load_end_address
-	; dd 0
-
-	; bss_end_addr
-	; dd 0
-
-	; entry_addr
-	; dd 0
-
-	; mode_type
-	; dd 0
-
-	; Width
-	; dd 1024
-
-	; Height
-	; dd 768
-
-	; Color depth
-	; dd 32
-
-
-; Kernel entry point
-section .text
+section.text
 global start
 extern kmain
-extern kbd_handler_main
-extern fault_handler
-extern context_switch
-extern timer_handler_main
 
-; Loads the IDT
-global load_idt
-load_idt:
-	mov edx, [esp + 4]
-	lidt [edx]
-	ret
-
-global kbd_handler
-kbd_handler:
-	pusha
-	call kbd_handler_main
-	popa
-	iretd
-
-; Handles any interrupts that are not specifically handled
-global isr_stub:
-isr_stub:
-	pusha
-	call fault_handler
-	popa
-	iretd
-
-global timer_handler
-timer_handler:
-	pusha
-	call timer_handler_main
-	popa
-	iretd
-
-global context_switch
 
 start:
-	; Disable interrupts
 	cli
-	; Set up stack
-	mov esp, stack_space
 
-	; Push Multiboot magic number and info struct onto stack
-	push eax
-	push ebx
+	; Store the MB info pointer
+	mov [mb_ptr], ebx
+	mov [magic_num], eax
 
-	; Call the entry point for the kernel
+	; Set up the higher-half paging
+	; First, set up a page table
+	mov edi, temp_page_tab
+	mov ecx, 1024
+	xor eax, eax
+	; Zero out the page table
+	rep stosd
+
+
+	; ID map first 4MB of physical memory
+	mov edi, temp_page_tab
+	mov ecx, 1024
+	mov eax, (PAGE_PRESENT | PAGE_WRITE)
+
+.map_low_mem:
+	stosd
+	add eax, 4096
+	loop.map_low_mem
+
+	; Create page directory
+	mov edi, temp_page_tab
+	mov ecx, 1024
+	xor eax, eax
+	; Zero out page directory
+	rep stosd
+
+
+	; Map page table at virtual address 0x0/0xC0000000
+	mov eax, temp_page_tab
+	or eax, (PAGE_PRESENT | PAGE_WRITE)
+
+
+	; Map first entry
+	mov [temp_page_tab], eax
+
+	; Map 768th entry (higher-half)
+	mov [temp_page_tab + 768 * 4], eax
+
+	; Load page directory, enable paging
+	mov eax, temp_page_tab
+	mov cr3, eax
+	mov eax, cr0
+	; Set the PG bit
+	or eax, 0x80000000
+	mov cr0, eax
+
+	; Jump to higher-half label, force EIP to high virtual address
+	lea eax, [higher_half]
+	jmp eax
+
+
+higher_half:
+
+	; Set up stack at known location with high memory
+	mov esp, stack_space + 4096
+
+	; Push MB info, magic number
+	push dword [magic_num]
+	push dword [mb_ptr]
+
+	; Call kernel's main function
 	call kmain
-	; Halt CPU
+
+	; Halt in the event of the kernel returning
+	cli
 	hlt
 
-; Stack
-section .bss
-; 8KB
-resb 8192
 
-stack_space:
+section.bss
+align 4096
+temp_page_dir: resb 4096
+temp_page_tab: resb 4096
+
+mb_ptr: resd 1
+magic_num: resd 1
+
+stack_space: resb 4096
