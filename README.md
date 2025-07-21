@@ -1,6 +1,8 @@
 # Kurios32
 A 32-bit kernel, written in C++, that can (probably) run on real hardware.
 
+I work on this a lot, and it is often a mess. If it doesn't compile, use a previous commit. I try to make a note of when the kernel is messed up. I use Github to archive the kernel's code.
+
 
 ## Features:
  - A working command-line interpreter

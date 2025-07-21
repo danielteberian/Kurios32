@@ -56,3 +56,7 @@ initrd.tar: $(wildcard initrd/*)
 extract_initrd:
 	mkdir -p initrd
 	tar -xf initrd.tar -C initrd 2>dev/null || true
+
+# Test the kernel, freeze the CPU at startup, wait for GDB connection
+debug: all
+	qemu-system-i386 -vga std -kernel $(KERNEL) -initrd initrd.tar -s -S
