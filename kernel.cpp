@@ -2,12 +2,14 @@
 
 //#include "fontman.h"
 #include "include/gdt.h"
+#include "include/global.h"
 #include "include/kernel.h"
 #include "include/idt.h"
 #include "include/kbd.h"
 #include "include/mem.h"
 #include "include/multiboot.h"
 #include "include/paging.h"
+#include "include/serial.h"
 #include "include/sh.h"
 #include "include/task.h"
 #include "include/vfs.h"
@@ -367,23 +369,15 @@ extern "C" void sh_entry()
 // The kernel's entry point
 extern "C" void kmain(mb_info_t* mbt, uint32_t magic)
 {
-	extern uint32_t end;
+	serial_init();
 
 	graphics_mode = graphics_init(mbt);
-
 	// Clear the screen
 	clear();
 
-	mem_init((uint32_t)&end);
 
-
-	// A test for the graphics
-	if (graphics_mode)
-	{
-		draw_rect_full(100, 100, 200, 150, rgb(255, 0, 0));
-		draw_rect_full(150, 150, 200, 150, rgb(0, 255, 0));
-		draw_rect_full(200, 200, 200, 150, rgb(0, 0, 255));
-	}
+	log(LOG_INFO, "Serial port initialized.");
+	log(LOG_INFO, graphics_mode ? "Graphics mode: enabled" : "Graphics mode: disabled");
 
 	if (magic != 0x2BADB002)
 	{
@@ -392,25 +386,25 @@ extern "C" void kmain(mb_info_t* mbt, uint32_t magic)
 	}
 
 	// Welcome message
-	log(LOG_INFO, "Kernel loaded successfully.");
+	log(LOG_INFO, "Kernel loaded successfully, Multiboot information has been validated.");
 	// Initialize GDT
 	gdt_init();
 	log(LOG_INFO, "GDT initialized.");
 	// Initialize memory management
-	mem_init((uint32_t)&end);
-	log(LOG_INFO, "Memory management initialized.");
+	idt_init();
+	log(LOG_INFO, "IDT initialized.");
+	// Initialize the PMM
+	pmm_init(mbt);
+	log(LOG_INFO, "Physical memory manager initialized.");
 	// Initialize paging
 	paging_init();
 	log(LOG_INFO, "Paging initialized.");
+	// Initalize the kernel heap
+	kmem_init();
+	log(LOG_INFO, "Kernel heap initialized.");
 	// Initialize VFS
 	vfs_init(mbt);
 	log(LOG_INFO, "Filesystem initialized.");
-
-	// Initialize font-management system
-	// fontman_init();
-	// Initialize the IDT
-	idt_init();
-	log(LOG_INFO, "IDT initialized.");
 	// Initialize the keyboard driver
 	kbd_init();
 	log(LOG_INFO, "Keyboard driver initialized.");
@@ -421,21 +415,8 @@ extern "C" void kmain(mb_info_t* mbt, uint32_t magic)
 	test_init();
 	log(LOG_INFO, "Testing framework initialized.");
 
-	/*
-	// Load the test program
-	uint32_t u_eip;
-	uint32_t u_esp;
+	log(LOG_INFO, "Everything is working correctly. Continuing to the shell.");
 
-	uint32_t* u_dir = uload(&u_eip, &u_esp);
-
-	// Switch to user page dir
-	paging_cd(u_dir);
-
-	set_kernel_stack((uint32_t)kmalloc(4096) + 4096);
-
-	// Enter user mode!
-	enter_umode(u_eip, u_esp);
-*/
 	sh_entry();
 
 	// If you get here, brokey

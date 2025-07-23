@@ -1,9 +1,12 @@
 // Paging for the kernel
 
 #include "include/error.h"
+#include "include/global.h"
 #include "include/kernel.h"
 #include "include/mem.h"
 #include "include/paging.h"
+#include "include/serial.h"
+#include "include/task.h"
 
 
 // Master page directory
@@ -13,10 +16,14 @@ page_dir_t* active_dir = 0;
 
 
 // Page fault handler
-extern "C" void page_fault_handler(uint32_t errc)
+extern "C" void page_fault_c_handler(reg_t* regs, uint32_t errc)
 {
     uint32_t faddr;
     asm volatile("mov %%cr2, %0" : "=r"(faddr));
+    serial_print("\n[!!!] KERNEL PANIC. PAGE FAULT\N");
+
+    char buffer;
+
     print_red("\n [ERR] PAGE FAULT: ");
     print_hex(faddr);
     print("\n [ERR] Error code: ");
@@ -24,28 +31,30 @@ extern "C" void page_fault_handler(uint32_t errc)
 
     if (!(errc & 0x1))
     {
-        print_red("\nPage not present.\n");
+        serial_print("\nPage not present.\n");
     }
 
     if (errc & 0x2)
     {
-        print_red("\nPage is read-only, but an attempt was made to write to it.\n");
+        serial_print("\nPage is read-only, but an attempt was made to write to it.\n");
     }
 
     if (errc & 0x4)
     {
-        print_red("\nPage is in usermode, but the kernel tried to access it.\n");
+        serial_print("\nPage is in usermode, but the kernel tried to access it.\n");
     }
 
     if (errc & 0x8)
     {
-        print_red("\nAn attempt was made to overwrite reserved bits.\n");
+        serial_print("\nAn attempt was made to overwrite reserved bits.\n");
     }
 
     if (errc & 0x10)
     {
-        print_red("\nInstruction fetching error.\n");
+        serial_print("\nInstruction fetching error.\n");
     }
+
+    // TODO: Print register statuses
 
 
     punchout("The system was halted due to a page fault.");

@@ -7,12 +7,12 @@ LD = ./toolchain/i386-elf/bin/ld
 
 # Flags
 ASM_F = -f elf32
-CPP_F = -I. -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-rtti -c
+CPP_F = -I. -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-rtti -c -g
 LD_F = -T linker.ld -nostdlib -lgcc
 
 # Files to include
-ASM_S = asm/boot.asm asm/gdt_asm.asm asm/switch.asm asm/syscalls_asm.asm asm/page_fault_handler_asm.asm asm/intr_handlers.asm
-CPP_S = kernel.cpp sh.cpp kbd.cpp idt.cpp task.cpp gdt.cpp vfs.cpp testing/test.cpp testing/mem_test.cpp graphics/graphics.cpp paging.cpp syscalls.cpp usr/uswitch.cpp usr/uload.cpp error.cpp debug.cpp testing/vfs_test.cpp util/convert.cpp mem.cpp
+ASM_S = asm/boot.asm asm/gdt_asm.asm asm/switch.asm asm/syscalls_asm.asm asm/intr_handlers.asm asm/fault_handlers.asm
+CPP_S = kernel.cpp sh.cpp kbd.cpp idt.cpp task.cpp gdt.cpp vfs.cpp testing/test.cpp testing/mem_test.cpp graphics/graphics.cpp paging.cpp syscalls.cpp usr/uswitch.cpp usr/uload.cpp error.cpp debug.cpp testing/vfs_test.cpp util/convert.cpp mem.cpp serial.cpp global.cpp
 OBJ = $(ASM_S:.asm=.o) $(CPP_S:.cpp=.o)
 KERNEL = kurios32.bin
 
@@ -37,7 +37,7 @@ $(KERNEL): $(OBJ) initrd.tar
 	$(CPP) $(CPP_F) $< -o $@
 
 run: all
-	qemu-system-i386 -vga std -kernel $(KERNEL) -initrd initrd.tar
+	qemu-system-i386 -vga std -kernel $(KERNEL) -initrd initrd.tar -serial file:serial.log
 
 clean:
 	rm -f $(OBJ) $(KERNEL)
@@ -59,4 +59,4 @@ extract_initrd:
 
 # Test the kernel, freeze the CPU at startup, wait for GDB connection
 debug: all
-	qemu-system-i386 -vga std -kernel $(KERNEL) -initrd initrd.tar -s -S
+	qemu-system-i386 -vga std -kernel $(KERNEL) -initrd initrd.tar -s -S -serial file:serial.log

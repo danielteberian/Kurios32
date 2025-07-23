@@ -2,6 +2,7 @@
 
 #include "include/error.h"
 #include "include/kernel.h"
+#include "include/serial.h"
 
 
 // Strings for each log level
@@ -49,6 +50,9 @@ void log(log_lvl_t lvl, const char* msg)
 
     color_print(buffer);
     print_char('\n');
+
+    serial_print(buffer);
+    serial_print("\n");
 }
 
 void punchout(const char* msg)
