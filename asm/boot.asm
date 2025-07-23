@@ -1,106 +1,103 @@
-; In asm/boot.asm
+; This file contains the basic code needed to set up paging and load the kernel correctly
 
-; Define constants for the multiboot header.
-MBALIGN  equ  1<<0            ; Align loaded modules on page boundaries.
-MEMINFO  equ  1<<1            ; Provide memory map.
-MBFLAGS  equ  MBALIGN | MEMINFO
-MAGIC    equ  0x1BADB002      ; Multiboot magic number.
-CHECKSUM equ -(MAGIC + MBFLAGS)
 
-; This is the Multiboot header.
+PAGE_PRESENT equ 1
+PAGE_WRITE equ 2
+
+
 section.multiboot
 align 4
-	dd MAGIC
-	dd MBFLAGS
-	dd CHECKSUM
+	dd 0x1BADB002
+	dd 0x00
+	dd - (0x1BADB002 + 0x00)
 
-; Reserve a stack for the kernel.
-section.bss
-align 16
-stack_bottom:
-resb 16384 ; 16 KB
-stack_top:
 
-; The linker script specifies _start as the entry point.
 section.text
-global _start
+global start
 extern kmain
 
-_start:
-    ; The CPU is in 32-bit protected mode when GRUB calls this.
-    ; Paging is not yet enabled. The GDT is GRUB's.
-    ; We need to set up our own stack and enable paging.
 
-    ; Set up a temporary stack.
-    mov esp, stack_top
+start:
+	cli
 
-    ; --- Set up Paging for Higher-Half Kernel ---
-    ; We will map the first 4MB of physical memory to the first 4MB of virtual memory (identity map).
-    ; We will also map the first 4MB of physical memory to 0xC0000000 (higher half).
-    
-    ; Clear the page directory and first page table.
-    mov edi, page_directory
-    mov ecx, 2048 ; 1024 for directory, 1024 for first table
-    xor eax, eax
-    cld
-    rep stosd
+	; Store the MB info pointer
+	mov [mb_ptr], ebx
+	mov [magic_num], eax
 
-    ; Map the first page table into the page directory.
-    ; Map it at both 0x00000000 and 0xC0000000.
-    mov eax, first_page_table
-    or eax, 0x3 ; Present, Read/Write
-    mov [page_directory], eax
-    mov [page_directory + 768 * 4], eax ; 0xC0000000 >> 22 = 768
+	; Set up the higher-half paging
+	; First, set up a page table
+	mov edi, temp_page_tab
+	mov ecx, 1024
+	xor eax, eax
+	; Zero out the page table
+	rep stosd
 
-    ; Identity map the first 4MB of memory.
-    mov edi, first_page_table
-    mov ecx, 1024
-    mov eax, 0x00000003 ; Start with physical address 0, Present, R/W
-  .map_loop:
-        stosd
-        add eax, 4096 ; Next 4KB page
-        loop.map_loop
 
-    ; Load the page directory address into CR3.
-    mov eax, page_directory
-    mov cr3, eax
+	; ID map first 4MB of physical memory
+	mov edi, temp_page_tab
+	mov ecx, 1024
+	mov eax, (PAGE_PRESENT | PAGE_WRITE)
 
-    ; Enable paging by setting the PG bit in CR0.
-    mov eax, cr0
-    or eax, 0x80000000
-    mov cr0, eax
+.map_low_mem:
+	stosd
+	add eax, 4096
+	loop.map_low_mem
 
-    ; --- Jump to Higher Half ---
-    ; We must do a long jump to a higher-half address to flush the CPU pipeline
-    ; and start executing from the new virtual address space.
-    lea eax, [higher_half]
-    jmp eax
+	; Create page directory
+	mov edi, temp_page_tab
+	mov ecx, 1024
+	xor eax, eax
+	; Zero out page directory
+	rep stosd
+
+
+	; Map page table at virtual address 0x0/0xC0000000
+	mov eax, temp_page_tab
+	or eax, (PAGE_PRESENT | PAGE_WRITE)
+
+
+	; Map first entry
+	mov [temp_page_tab], eax
+
+	; Map 768th entry (higher-half)
+	mov [temp_page_tab + 768 * 4], eax
+
+	; Load page directory, enable paging
+	mov eax, temp_page_tab
+	mov cr3, eax
+	mov eax, cr0
+	; Set the PG bit
+	or eax, 0x80000000
+	mov cr0, eax
+
+	; Jump to higher-half label, force EIP to high virtual address
+	lea eax, [higher_half]
+	jmp eax
+
 
 higher_half:
-    ; We are now executing in the higher half!
-    
-    ; Set up the final kernel stack. The linker has already calculated the
-    ; correct virtual address for stack_top.
-    mov esp, stack_top
 
-    ; Push the multiboot magic number and info structure pointer onto the stack.
-    ; These are the arguments for kmain.
-    push ebx ; Multiboot info structure
-    push eax ; Multiboot magic number
+	; Set up stack at known location with high memory
+	mov esp, stack_space + 4096
 
-    ; Call the C++ kernel entry point.
-    call kmain
+	; Push MB info, magic number
+	push dword [magic_num]
+	push dword [mb_ptr]
 
-    ; If kmain ever returns, hang the system.
-    cli
-.hang:
-    hlt
-    jmp.hang
+	; Call kernel's main function
+	call kmain
 
-; Page directory and tables must be page-aligned.
+	; Halt in the event of the kernel returning
+	cli
+	hlt
+
+
 section.bss
 align 4096
-page_directory:
-    resd 1024
-first_page_table:
-    resd 1024
+temp_page_dir: resb 4096
+temp_page_tab: resb 4096
+
+mb_ptr: resd 1
+magic_num: resd 1
+
+stack_space: resb 4096
