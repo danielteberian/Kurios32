@@ -9,6 +9,7 @@
 #include "include/task.h"
 
 
+static page_dir_t k_dir_storage __attribute__((aligned(4096)));
 // Master page directory
 page_dir_t* k_dir = 0;
 // Active page directory
@@ -63,6 +64,7 @@ extern "C" void page_fault_c_handler(reg_t* regs, uint32_t errc)
 
 void paging_init()
 {
+
     // Allocate a frame from the kernel's page directory
     uint32_t pdir = pmm_alloc_frame();
     k_dir = (page_dir_t*)pdir;

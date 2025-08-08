@@ -44,7 +44,7 @@ start:
 	loop.map_low_mem
 
 	; Create page directory
-	mov edi, temp_page_tab
+	mov edi, temp_page_dir
 	mov ecx, 1024
 	xor eax, eax
 	; Zero out page directory
@@ -60,10 +60,10 @@ start:
 	mov [temp_page_tab], eax
 
 	; Map 768th entry (higher-half)
-	mov [temp_page_tab + 768 * 4], eax
+	mov [temp_page_dir + 768 * 4], eax
 
 	; Load page directory, enable paging
-	mov eax, temp_page_tab
+	mov eax, temp_page_dir
 	mov cr3, eax
 	mov eax, cr0
 	; Set the PG bit
@@ -92,7 +92,7 @@ higher_half:
 	hlt
 
 
-section.bss
+section .bss
 align 4096
 temp_page_dir: resb 4096
 temp_page_tab: resb 4096

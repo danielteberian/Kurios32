@@ -154,7 +154,7 @@ void kfree(void* ptr)
 
     for (slab_t* s = cache -> part_slabs; s; s = s -> next)
     {
-        if (true_ptr >= (void*)s && true_ptr < (void*)s + PMM_F_SIZE)
+        if (true_ptr >= (void*)s && true_ptr < (void*)((char*)s + PMM_F_SIZE))
         {
             slab = s;
             break;
@@ -165,7 +165,7 @@ void kfree(void* ptr)
     {
         for (slab_t* s = cache -> full_slabs; s; prev_slab = s, s = s -> next)
         {
-            if (true_ptr >= (void*)s && true_ptr < (void*)s + PMM_F_SIZE)
+            if (true_ptr >= (void*)s && true_ptr < (void*)((char*)s + PMM_F_SIZE))
             {
                 slab = s;
 
